@@ -126,19 +126,29 @@ const DistanceTimeGraph = () => {
 
       const color = d3.scaleOrdinal(d3.schemeCategory10);
 
+      const currentTime = new Date();
+
       const trainLines = filteredTrainData.map((train, i) => {
-        const line = d3
+        const pastData = train.data.filter((d) => d.time <= currentTime);
+        const futureData = train.data.filter((d) => d.time > currentTime);
+
+        const pastLine = d3
           .line()
           .x((d) => x(d.time))
           .y((d) => y(d.distance));
 
-        return g
+        const futureLine = d3
+          .line()
+          .x((d) => x(d.time))
+          .y((d) => y(d.distance));
+
+        const pastPath = g
           .append("path")
-          .datum(train.data)
+          .datum(pastData)
           .attr("fill", "none")
           .attr("stroke", color(i))
           .attr("stroke-width", 2)
-          .attr("d", line)
+          .attr("d", pastLine)
           .style(
             "display",
             selectedTrain && selectedTrain.train !== train.train ? "none" : null
@@ -146,6 +156,24 @@ const DistanceTimeGraph = () => {
           .on("click", () => setSelectedTrain(train))
           .style("cursor", "pointer")
           .attr("pointer-events", "all");
+
+        const futurePath = g
+          .append("path")
+          .datum(futureData)
+          .attr("fill", "none")
+          .attr("stroke", color(i))
+          .attr("stroke-width", 2)
+          .attr("stroke-dasharray", "5,5")
+          .attr("d", futureLine)
+          .style(
+            "display",
+            selectedTrain && selectedTrain.train !== train.train ? "none" : null
+          )
+          .on("click", () => setSelectedTrain(train))
+          .style("cursor", "pointer")
+          .attr("pointer-events", "all");
+
+        return { pastPath, futurePath };
       });
 
       const zoom = d3
@@ -172,8 +200,15 @@ const DistanceTimeGraph = () => {
               .ticks(innerHeight / 50)
               .tickSizeOuter(0)
           );
-          trainLines.forEach((line) => {
-            line.attr(
+          trainLines.forEach(({ pastPath, futurePath }) => {
+            pastPath.attr(
+              "d",
+              d3
+                .line()
+                .x((d) => newX(d.time))
+                .y((d) => newY(d.distance))
+            );
+            futurePath.attr(
               "d",
               d3
                 .line()
