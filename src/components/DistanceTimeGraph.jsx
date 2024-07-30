@@ -4,7 +4,6 @@ import "./DistanceTimeGraph.css";
 
 const DistanceTimeGraph = () => {
   const svgRef = useRef();
-  const [selectedTrain, setSelectedTrain] = useState(null);
   const [trainData, setTrainData] = useState([]);
   const [filteredTrainData, setFilteredTrainData] = useState([]);
 
@@ -126,54 +125,14 @@ const DistanceTimeGraph = () => {
 
       const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-      const currentTime = new Date();
-
-      const trainLines = filteredTrainData.map((train, i) => {
-        const pastData = train.data.filter((d) => d.time <= currentTime);
-        const futureData = train.data.filter((d) => d.time > currentTime);
-
-        const pastLine = d3
-          .line()
-          .x((d) => x(d.time))
-          .y((d) => y(d.distance));
-
-        const futureLine = d3
-          .line()
-          .x((d) => x(d.time))
-          .y((d) => y(d.distance));
-
-        const pastPath = g
-          .append("path")
-          .datum(pastData)
-          .attr("fill", "none")
-          .attr("stroke", color(i))
-          .attr("stroke-width", 2)
-          .attr("d", pastLine)
-          .style(
-            "display",
-            selectedTrain && selectedTrain.train !== train.train ? "none" : null
-          )
-          .on("click", () => setSelectedTrain(train))
-          .style("cursor", "pointer")
-          .attr("pointer-events", "all");
-
-        const futurePath = g
-          .append("path")
-          .datum(futureData)
-          .attr("fill", "none")
-          .attr("stroke", color(i))
-          .attr("stroke-width", 2)
-          .attr("stroke-dasharray", "5,5")
-          .attr("d", futureLine)
-          .style(
-            "display",
-            selectedTrain && selectedTrain.train !== train.train ? "none" : null
-          )
-          .on("click", () => setSelectedTrain(train))
-          .style("cursor", "pointer")
-          .attr("pointer-events", "all");
-
-        return { pastPath, futurePath };
+      filteredTrainData.forEach((train, i) => {
+        train.data.forEach((d) => {
+          g.append("circle")
+            .attr("cx", x(d.time))
+            .attr("cy", y(d.distance))
+            .attr("r", 4)
+            .attr("fill", color(i));
+        });
       });
 
       const zoom = d3
@@ -200,22 +159,10 @@ const DistanceTimeGraph = () => {
               .ticks(innerHeight / 50)
               .tickSizeOuter(0)
           );
-          trainLines.forEach(({ pastPath, futurePath }) => {
-            pastPath.attr(
-              "d",
-              d3
-                .line()
-                .x((d) => newX(d.time))
-                .y((d) => newY(d.distance))
-            );
-            futurePath.attr(
-              "d",
-              d3
-                .line()
-                .x((d) => newX(d.time))
-                .y((d) => newY(d.distance))
-            );
-          });
+          svg
+            .selectAll("circle")
+            .attr("cx", (d) => newX(d.time))
+            .attr("cy", (d) => newY(d.distance));
         });
 
       svg.call(zoom).on("wheel.zoom", null);
@@ -225,7 +172,7 @@ const DistanceTimeGraph = () => {
     window.addEventListener("resize", updateGraph);
 
     return () => window.removeEventListener("resize", updateGraph);
-  }, [selectedTrain, filteredTrainData]);
+  }, [filteredTrainData]);
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
@@ -251,30 +198,12 @@ const DistanceTimeGraph = () => {
                 padding: "10px",
                 fontSize: "16px",
               }}
-              onClick={() => setSelectedTrain(train)}
             >
               {train.train}
             </li>
           ))}
         </ul>
       </div>
-
-      {selectedTrain && (
-        <div className="side-panel">
-          <h2>{selectedTrain.train}</h2>
-          <p>
-            <strong>Train Code:</strong> {selectedTrain.trainCode}
-          </p>
-          <p>
-            <strong>Journey Details:</strong> {selectedTrain.journeyDetails}
-          </p>
-          <p>
-            <strong>Current Distance:</strong>
-            {selectedTrain.data[selectedTrain.data.length - 1].distance} km
-          </p>
-          <button onClick={() => setSelectedTrain(null)}>Close</button>
-        </div>
-      )}
     </div>
   );
 };
