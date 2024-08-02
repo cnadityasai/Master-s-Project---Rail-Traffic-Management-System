@@ -1,5 +1,9 @@
 /* src/DistanceTimeGraph.css */
 
+body {
+  overflow: hidden;
+}
+
 .side-panel {
   position: fixed;
   right: 0;
@@ -9,7 +13,7 @@
   background: white;
   border-left: 1px solid #ddd;
   padding: 20px;
-  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
 }
 
